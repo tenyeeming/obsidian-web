@@ -323,7 +323,7 @@ const App = {
 
   async saveCapture() {
     const title = document.getElementById('capture-title').value.trim()
-      || new Date().toISOString().slice(0, 19).replace('T', ' ');
+      || new Date().toISOString().slice(0, 19).replace('T', ' ').replace(/:/g, '-');
     const content = document.getElementById('capture-content').value.trim();
     if (!content) { this.toast('內容不能為空'); return; }
 
