@@ -104,8 +104,24 @@
     </main>
   </div>
 
-  <!-- FAB: quick capture -->
+  <!-- FAB: desktop only -->
   <button id="quick-capture-fab" title="速記">✍️</button>
+
+  <!-- Bottom nav: mobile only -->
+  <nav id="bottom-nav">
+    <button id="nav-notes" class="nav-btn active">
+      <span>📚</span>
+      <label>筆記</label>
+    </button>
+    <button id="nav-capture" class="nav-btn">
+      <span>✍️</span>
+      <label>速記</label>
+    </button>
+    <button id="nav-search" class="nav-btn">
+      <span>🔍</span>
+      <label>搜尋</label>
+    </button>
+  </nav>
 </div>
 
 <!-- ── Quick Capture Modal ───────────────────────────────────────── -->
@@ -139,9 +155,10 @@
       <span>新增筆記</span>
       <button id="close-new-note" class="icon-btn">✕</button>
     </div>
-    <input type="text" id="new-note-path" placeholder="路徑，例：代码大集合/新筆記.md">
+    <select id="new-note-folder" style="width:100%;padding:12px 16px;border:none;border-bottom:1px solid var(--border);background:var(--bg-modal);color:var(--text);font-size:.95rem;"></select>
+    <input type="text" id="new-note-filename" placeholder="筆記名稱（不用加 .md）" style="padding:12px 16px;border:none;border-bottom:1px solid var(--border);background:var(--bg-modal);color:var(--text);font-size:.95rem;width:100%;outline:none;">
     <div class="modal-footer">
-      <span style="font-size:.8rem;color:var(--text-muted)">不用輸入 .md 副檔名</span>
+      <span style="font-size:.8rem;color:var(--text-muted)">選擇資料夾，輸入名稱</span>
       <button id="create-note-btn" class="btn btn-primary">建立</button>
     </div>
   </div>

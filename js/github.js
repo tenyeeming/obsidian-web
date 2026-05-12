@@ -59,16 +59,32 @@ const GitHub = {
     return this.request('GET', `/search/code?q=${q}&per_page=20`);
   },
 
-  async buildTree(path = '', acc = []) {
-    const items = await this.listDir(path);
-    for (const item of items) {
-      if (item.type === 'dir') {
-        acc.push({ name: item.name, path: item.path, type: 'dir', children: [] });
-        await this.buildTree(item.path, acc[acc.length - 1].children = acc[acc.length - 1].children || []);
-      } else if (item.name.endsWith('.md')) {
-        acc.push({ name: item.name, path: item.path, type: 'file' });
+  // Single API call instead of recursive calls — much faster
+  async buildTree() {
+    const data = await this.request('GET', `/repos/${this.owner}/${this.repo}/git/trees/main?recursive=1`);
+    const mdFiles = data.tree
+      .filter(item => item.type === 'blob' && item.path.endsWith('.md'))
+      .map(item => item.path);
+    return this._buildStructure(mdFiles);
+  },
+
+  _buildStructure(paths) {
+    const root = [];
+    const dirMap = {};
+    paths.forEach(path => {
+      const parts = path.split('/');
+      let list = root;
+      for (let i = 0; i < parts.length - 1; i++) {
+        const dirPath = parts.slice(0, i + 1).join('/');
+        if (!dirMap[dirPath]) {
+          const dir = { name: parts[i], path: dirPath, type: 'dir', children: [] };
+          dirMap[dirPath] = dir;
+          list.push(dir);
+        }
+        list = dirMap[dirPath].children;
       }
-    }
-    return acc;
+      list.push({ name: parts[parts.length - 1], path, type: 'file' });
+    });
+    return root;
   }
 };

@@ -291,16 +291,36 @@ const App = {
 
   // ── New Note ──────────────────────────────────────────────────────────────
 
+  getFolders(nodes, result = []) {
+    nodes.forEach(n => {
+      if (n.type === 'dir') {
+        result.push(n.path);
+        if (n.children) this.getFolders(n.children, result);
+      }
+    });
+    return result;
+  },
+
   showNewNoteModal() {
     document.getElementById('new-note-modal').classList.remove('hidden');
-    document.getElementById('new-note-path').value = '';
-    document.getElementById('new-note-path').focus();
+    const select = document.getElementById('new-note-folder');
+    select.innerHTML = '<option value="">根目錄 /</option>';
+    this.getFolders(this.state.tree).forEach(f => {
+      const opt = document.createElement('option');
+      opt.value = f;
+      opt.textContent = f + '/';
+      select.appendChild(opt);
+    });
+    document.getElementById('new-note-filename').value = '';
+    document.getElementById('new-note-filename').focus();
   },
 
   async createNote() {
-    let path = document.getElementById('new-note-path').value.trim();
-    if (!path) { this.toast('請輸入路徑'); return; }
-    if (!path.endsWith('.md')) path += '.md';
+    const folder = document.getElementById('new-note-folder').value;
+    let filename = document.getElementById('new-note-filename').value.trim();
+    if (!filename) { this.toast('請輸入筆記名稱'); return; }
+    if (!filename.endsWith('.md')) filename += '.md';
+    let path = folder ? `${folder}/${filename}` : filename;
     try {
       await GitHub.saveFile(path, `# ${path.split('/').pop().replace(/\.md$/, '')}\n\n`);
       document.getElementById('new-note-modal').classList.add('hidden');
@@ -334,9 +354,11 @@ const App = {
       document.getElementById('capture-title').value = '';
       document.getElementById('capture-content').value = '';
       localStorage.removeItem('ob_draft');
+      document.getElementById('draft-indicator').classList.add('hidden');
       document.getElementById('quick-capture-modal').classList.add('hidden');
       this.state.tree = await GitHub.buildTree();
       this.renderTree(this.state.tree, document.getElementById('file-tree'), '');
+      await this.openNote(path);
       this.toast('速記已儲存');
     } catch (e) {
       this.toast('儲存失敗: ' + e.message);
@@ -411,6 +433,11 @@ const App = {
     const sidebar = document.getElementById('sidebar');
     this.state.sidebarOpen = !this.state.sidebarOpen;
     sidebar.classList.toggle('closed', !this.state.sidebarOpen);
+  },
+
+  setActiveNav(id) {
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(id)?.classList.add('active');
   },
 
   // ── Dark Mode ─────────────────────────────────────────────────────────────
@@ -509,9 +536,26 @@ const App = {
         this.applyMarkdown(document.getElementById(targetId), action);
       });
     });
-    // New note path enter key
-    document.getElementById('new-note-path').addEventListener('keydown', e => {
+    // New note filename enter key
+    document.getElementById('new-note-filename').addEventListener('keydown', e => {
       if (e.key === 'Enter') this.createNote();
+    });
+    // Bottom nav
+    document.getElementById('nav-notes').addEventListener('click', () => {
+      this.toggleSidebar();
+      this.setActiveNav('nav-notes');
+    });
+    document.getElementById('nav-capture').addEventListener('click', () => {
+      this.openCapture();
+      this.setActiveNav('nav-capture');
+    });
+    document.getElementById('nav-search').addEventListener('click', () => {
+      document.getElementById('search-input').focus();
+      if (window.innerWidth < 768) {
+        document.getElementById('sidebar').classList.remove('closed');
+        this.state.sidebarOpen = true;
+      }
+      this.setActiveNav('nav-search');
     });
     // Setup PAT enter key
     document.getElementById('setup-pat') && document.getElementById('setup-pat').addEventListener('keydown', e => {

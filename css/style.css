@@ -475,15 +475,76 @@ header {
 
 .draft-saved { font-size: .8rem; color: var(--text-muted); }
 
-/* ── Mobile ────────────────────────────────────────────────────── */
+/* ── Bottom Nav ────────────────────────────────────────────────── */
+#bottom-nav { display: none; }
+
 @media (max-width: 767px) {
+  :root { --bottom-nav-h: 60px; }
+
+  #bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: var(--bottom-nav-h);
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    z-index: 100;
+  }
+  .nav-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: .7rem;
+    padding: 6px 0;
+  }
+  .nav-btn span { font-size: 1.3rem; }
+  .nav-btn label { font-size: .65rem; cursor: pointer; }
+  .nav-btn.active { color: var(--accent); }
+
+  /* Hide FAB on mobile, use bottom nav instead */
+  #quick-capture-fab { display: none; }
+
+  /* Sidebar overlays content on mobile */
   #sidebar {
     position: absolute;
-    height: calc(100dvh - var(--header-h));
+    height: calc(100dvh - var(--header-h) - var(--bottom-nav-h));
     top: var(--header-h);
     z-index: 50;
-    width: min(var(--sidebar-w), 80vw);
+    width: min(var(--sidebar-w), 85vw);
     box-shadow: var(--shadow);
   }
-  #sidebar.closed { transform: translateX(-110%); width: min(var(--sidebar-w), 80vw); }
+  #sidebar.closed { transform: translateX(-110%); width: min(var(--sidebar-w), 85vw); }
+
+  /* Make room for bottom nav */
+  #app-screen { padding-bottom: var(--bottom-nav-h); }
+
+  /* Larger touch targets */
+  .btn { padding: 8px 16px; font-size: .9rem; }
+  .icon-btn { width: 40px; height: 40px; }
+  .tree-file, .tree-folder-header { padding: 10px 12px; font-size: .95rem; }
+
+  /* Modal full-screen on mobile */
+  .modal { padding: 0; align-items: flex-end; }
+  .modal-content {
+    border-radius: 20px 20px 0 0;
+    max-height: 92dvh;
+  }
+  #capture-content { min-height: 220px; }
+
+  /* Note content padding */
+  #note-content { padding: 16px; }
+  #note-header { padding: 10px 12px; }
+  #edit-content { font-size: 1rem; padding: 12px 16px; }
+
+  /* Toast above bottom nav */
+  #toast { bottom: calc(var(--bottom-nav-h) + 12px); }
 }
