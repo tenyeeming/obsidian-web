@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Obsidian Web</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ── Login / Setup Screen ─────────────────────────────────────── -->
+<div id="login-screen">
+  <div class="login-container">
+    <div class="logo">📝</div>
+    <h1>Obsidian Web</h1>
+
+    <!-- First-time setup -->
+    <div id="setup-form" class="hidden">
+      <p>首次設定：輸入 GitHub Token 並設定 4 位 PIN</p>
+      <input type="password" id="setup-pat" placeholder="GitHub Personal Access Token (repo 權限)" autocomplete="off">
+      <div class="pin-label">設定 4 位 PIN</div>
+      <div class="pin-dots" id="setup-pin-display">
+        <span></span><span></span><span></span><span></span>
+      </div>
+      <div class="numpad" id="setup-numpad"></div>
+    </div>
+
+    <!-- Normal login -->
+    <div id="login-form">
+      <p>輸入 PIN 解鎖</p>
+      <div class="pin-dots" id="login-pin-display">
+        <span></span><span></span><span></span><span></span>
+      </div>
+      <div class="numpad" id="login-numpad"></div>
+      <div id="login-error" class="error hidden">PIN 錯誤，請重試</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Main App ──────────────────────────────────────────────────── -->
+<div id="app-screen" class="hidden">
+
+  <header>
+    <button id="toggle-sidebar" class="icon-btn" title="切換側欄">☰</button>
+    <div class="search-wrapper">
+      <input type="text" id="search-input" placeholder="搜尋筆記...">
+    </div>
+    <button id="theme-toggle" class="icon-btn" title="切換深色模式">🌙</button>
+    <button id="settings-btn" class="icon-btn" title="設定">⚙️</button>
+  </header>
+
+  <div id="main-content">
+
+    <!-- Sidebar: file tree -->
+    <aside id="sidebar">
+      <div class="sidebar-header">
+        <span>我的筆記</span>
+        <button id="new-note-btn" class="icon-btn" title="新增筆記" style="font-size:1.3rem">+</button>
+      </div>
+      <div id="file-tree"></div>
+    </aside>
+
+    <!-- Main editor/viewer -->
+    <main id="editor-area">
+
+      <!-- Empty state -->
+      <div id="empty-state">
+        <p>選擇一個筆記，或開始速記</p>
+        <button id="quick-capture-empty" class="btn btn-primary">✍️ 快速速記</button>
+      </div>
+
+      <!-- Note viewer -->
+      <div id="note-view" class="hidden">
+        <div id="note-header">
+          <h2 id="note-title"></h2>
+          <div class="note-actions">
+            <button id="edit-btn" class="btn">編輯</button>
+            <button id="delete-btn" class="btn btn-danger">刪除</button>
+          </div>
+        </div>
+        <div id="note-content"></div>
+      </div>
+
+      <!-- Note editor -->
+      <div id="note-edit" class="hidden">
+        <div id="edit-header">
+          <input type="text" id="edit-title" placeholder="筆記標題">
+          <div class="edit-actions">
+            <button id="save-btn" class="btn btn-primary">儲存</button>
+            <button id="cancel-btn" class="btn">取消</button>
+          </div>
+        </div>
+        <div class="markdown-toolbar" id="md-toolbar">
+          <button data-action="bold"><b>B</b></button>
+          <button data-action="italic"><i>I</i></button>
+          <button data-action="heading">H1</button>
+          <button data-action="code">` `</button>
+          <button data-action="list">• 列表</button>
+          <button data-action="checkbox">☑ 勾選</button>
+        </div>
+        <textarea id="edit-content" placeholder="開始寫作..."></textarea>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- FAB: quick capture -->
+  <button id="quick-capture-fab" title="速記">✍️</button>
+</div>
+
+<!-- ── Quick Capture Modal ───────────────────────────────────────── -->
+<div id="quick-capture-modal" class="modal hidden">
+  <div class="modal-content">
+    <div class="modal-header">
+      <span>✍️ 速記</span>
+      <button id="close-capture" class="icon-btn">✕</button>
+    </div>
+    <input type="text" id="capture-title" placeholder="標題（留空則用時間命名）">
+    <div class="markdown-toolbar" id="capture-toolbar">
+      <button data-action="bold"><b>B</b></button>
+      <button data-action="italic"><i>I</i></button>
+      <button data-action="heading">H1</button>
+      <button data-action="code">` `</button>
+      <button data-action="list">• 列表</button>
+      <button data-action="checkbox">☑ 勾選</button>
+    </div>
+    <textarea id="capture-content" placeholder="記下你的靈感..."></textarea>
+    <div class="modal-footer">
+      <span id="draft-indicator" class="draft-saved hidden">草稿已儲存</span>
+      <button id="save-capture" class="btn btn-primary">儲存到速記資料夾</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── New Note Modal ────────────────────────────────────────────── -->
+<div id="new-note-modal" class="modal hidden">
+  <div class="modal-content">
+    <div class="modal-header">
+      <span>新增筆記</span>
+      <button id="close-new-note" class="icon-btn">✕</button>
+    </div>
+    <input type="text" id="new-note-path" placeholder="路徑，例：代码大集合/新筆記.md">
+    <div class="modal-footer">
+      <span style="font-size:.8rem;color:var(--text-muted)">不用輸入 .md 副檔名</span>
+      <button id="create-note-btn" class="btn btn-primary">建立</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Conflict Modal ────────────────────────────────────────────── -->
+<div id="conflict-modal" class="modal hidden">
+  <div class="modal-content" style="padding:24px;gap:16px;display:flex;flex-direction:column">
+    <div class="modal-header" style="padding:0;border:none">
+      <span>⚠️ 衝突警告</span>
+    </div>
+    <p style="color:var(--text-muted);font-size:.9rem;line-height:1.6">
+      此筆記在你編輯期間已被其他地方修改（如桌面 Obsidian）。<br>
+      強制儲存將覆蓋最新版本。
+    </p>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button id="conflict-cancel" class="btn">取消</button>
+      <button id="conflict-force" class="btn btn-danger">強制覆蓋</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Toast ─────────────────────────────────────────────────────── -->
+<div id="toast" class="hidden"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="js/crypto.js"></script>
+<script src="js/github.js"></script>
+<script src="js/markdown.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
