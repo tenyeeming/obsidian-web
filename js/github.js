@@ -6,6 +6,10 @@ const GitHub = {
 
   setToken(token) { this.token = token; },
 
+  _encodePath(path) {
+    return path.split('/').map(encodeURIComponent).join('/');
+  },
+
   async request(method, path, body = null) {
     const res = await fetch(`${this.base}${path}`, {
       method,
@@ -25,11 +29,11 @@ const GitHub = {
   },
 
   async listDir(path = '') {
-    return this.request('GET', `/repos/${this.owner}/${this.repo}/contents/${encodeURIComponent(path)}`);
+    return this.request('GET', `/repos/${this.owner}/${this.repo}/contents/${this._encodePath(path)}`);
   },
 
   async getFile(path) {
-    const data = await this.request('GET', `/repos/${this.owner}/${this.repo}/contents/${encodeURIComponent(path)}`);
+    const data = await this.request('GET', `/repos/${this.owner}/${this.repo}/contents/${this._encodePath(path)}`);
     return {
       content: decodeURIComponent(escape(atob(data.content.replace(/\n/g, '')))),
       sha: data.sha,
@@ -44,11 +48,11 @@ const GitHub = {
       content: btoa(unescape(encodeURIComponent(content)))
     };
     if (sha) body.sha = sha;
-    return this.request('PUT', `/repos/${this.owner}/${this.repo}/contents/${encodeURIComponent(path)}`, body);
+    return this.request('PUT', `/repos/${this.owner}/${this.repo}/contents/${this._encodePath(path)}`, body);
   },
 
   async deleteFile(path, sha) {
-    return this.request('DELETE', `/repos/${this.owner}/${this.repo}/contents/${encodeURIComponent(path)}`, {
+    return this.request('DELETE', `/repos/${this.owner}/${this.repo}/contents/${this._encodePath(path)}`, {
       message: `web: delete ${path.split('/').pop()}`,
       sha
     });
