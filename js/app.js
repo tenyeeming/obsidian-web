@@ -348,15 +348,37 @@ const App = {
   },
 
   async saveCapture() {
-    const title = document.getElementById('capture-title').value.trim()
-      || new Date().toISOString().slice(0, 19).replace('T', ' ').replace(/:/g, '-');
+    const title = document.getElementById('capture-title').value.trim();
     const content = document.getElementById('capture-content').value.trim();
     if (!content) { this.toast('內容不能為空'); return; }
 
-    const path = `${this.QUICK_FOLDER}/${title}.md`;
-    const body = `# ${title}\n\n${content}\n`;
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const hh = String(now.getHours()).padStart(2, '0');
+    const min = String(now.getMinutes()).padStart(2, '0');
+
+    const month = `${yyyy}-${mm}`;
+    const date = `${yyyy}-${mm}-${dd}`;
+    const time = `${hh}:${min}`;
+    const path = `${this.QUICK_FOLDER}/${month}/${date}.md`;
+
+    const entryHead = title ? `## ${title}\n*${time}*` : `## ${time}`;
+    const newEntry = `\n\n${entryHead}\n\n${content}`;
+
     try {
-      await GitHub.saveFile(path, body);
+      let base = '';
+      let sha = null;
+      try {
+        const existing = await GitHub.getFile(path);
+        base = existing.content;
+        sha = existing.sha;
+      } catch {
+        base = `# 速記 ${date}`;
+      }
+
+      await GitHub.saveFile(path, base + newEntry, sha);
       document.getElementById('capture-title').value = '';
       document.getElementById('capture-content').value = '';
       localStorage.removeItem('ob_draft');
