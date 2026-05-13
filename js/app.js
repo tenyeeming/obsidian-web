@@ -232,37 +232,43 @@ const App = {
 
     const dir = note.path.split('/').slice(0, -1).join('/');
     const newPath = dir ? `${dir}/${title}.md` : `${title}.md`;
+    const isRename = newPath !== note.path;
 
-    // Conflict check
     try {
       const latest = await GitHub.getFile(note.path);
       if (latest.sha !== this.state.editingSha) {
-        this.showConflict(newPath, content, latest.sha);
+        this.showConflict(newPath, content, latest.sha, isRename ? note : null);
         return;
       }
     } catch {}
 
-    await this._doSave(newPath, content, this.state.editingSha, note.path !== newPath ? null : this.state.editingSha);
+    await this._doSave(newPath, content, isRename ? null : this.state.editingSha, isRename ? note : null);
   },
 
-  showConflict(path, content, latestSha) {
+  showConflict(path, content, latestSha, oldNote = null) {
     const modal = document.getElementById('conflict-modal');
     modal.classList.remove('hidden');
     document.getElementById('conflict-force').onclick = async () => {
       modal.classList.add('hidden');
-      await this._doSave(path, content, latestSha);
+      await this._doSave(path, content, oldNote ? null : latestSha, oldNote);
     };
     document.getElementById('conflict-cancel').onclick = () => modal.classList.add('hidden');
   },
 
-  async _doSave(path, content, sha) {
+  async _doSave(path, content, sha, oldNote = null) {
     try {
       await GitHub.saveFile(path, content, sha);
+      if (oldNote) await GitHub.deleteFile(oldNote.path, oldNote.sha);
       const updated = await GitHub.getFile(path);
       this.state.currentNote = updated;
       this.state.editingSha = updated.sha;
+      document.getElementById('note-title').textContent = path.split('/').pop().replace(/\.md$/, '');
       document.getElementById('note-content').innerHTML = MD.render(content, path);
       MD.bind(document.getElementById('note-content'));
+      if (oldNote) {
+        this.state.tree = await GitHub.buildTree();
+        this.renderTree(this.state.tree, document.getElementById('file-tree'), '');
+      }
       this.showNotePanel('view');
       this.toast('儲存成功');
     } catch (e) {
